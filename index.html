@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Wikipedia Quantum</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['"SF Pro Display"', '-apple-system', 'BlinkMacSystemFont', 'sans-serif'],
+                        mono: ['"SF Mono"', 'Menlo', 'monospace']
+                    },
+                    animation: {
+                        'float': 'float 6s ease-in-out infinite',
+                        'gradient': 'gradient 8s ease infinite',
+                    },
+                    keyframes: {
+                        float: {
+                            '0%, 100%': { transform: 'translateY(0)' },
+                            '50%': { transform: 'translateY(-10px)' }
+                        },
+                        gradient: {
+                            '0%, 100%': { 'background-position': '0% 50%' },
+                            '50%': { 'background-position': '100% 50%' }
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #6366f1;
+            --secondary: #8b5cf6;
+            --dark: #0f172a;
+        }
+        body {
+            background: linear-gradient(-45deg, #0f172a, #1e293b, #334155);
+            background-size: 400% 400%;
+            animation: gradient 15s ease infinite;
+            min-height: 100vh;
+            font-family: 'Inter', sans-serif;
+        }
+        .glass-card {
+            background: rgba(15, 23, 42, 0.7);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        .search-glow {
+            box-shadow: 0 0 15px rgba(99, 102, 241, 0.5);
+        }
+        .result-card {
+            background: linear-gradient(145deg, rgba(30, 41, 59, 0.8), rgba(15, 23, 42, 0.9));
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+        .animate-float {
+            animation: float 6s ease-in-out infinite;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .fade-in {
+            animation: fadeIn 0.4s ease-out forwards;
+        }
+        /* Enhanced image styles for better clarity */
+        .result-image {
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            filter: contrast(1.05) brightness(1.05);
+        }
+    </style>
+</head>
+<body class="text-gray-100">
+    <div class="min-h-screen flex items-center justify-center p-4 relative overflow-hidden">
+        <!-- Animated background elements -->
+        <div class="absolute top-20 left-20 w-64 h-64 rounded-full bg-indigo-500/10 blur-3xl animate-float"></div>
+        <div class="absolute bottom-10 right-20 w-72 h-72 rounded-full bg-purple-500/10 blur-3xl animate-float" style="animation-delay: 2s;"></div>
+        
+        <div class="glass-card max-w-4xl w-full mx-auto p-10 rounded-2xl shadow-2xl relative z-10">
+            <div class="text-center mb-12">
+                <div class="flex justify-center mb-6">
+                    <div class="w-20 h-20 bg-gradient-to-r from-indigo-500 to-purple-600 rounded-2xl flex items-center justify-center shadow-lg">
+                        <i class="fas fa-atom text-3xl text-white"></i>
+                    </div>
+                </div>
+                <h1 class="text-5xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-indigo-400 to-purple-300 mb-4">Wikipedia Quantum</h1>
+                <p class="text-lg text-gray-400 max-w-lg mx-auto">The world's knowledge at quantum speed</p>
+            </div>
+            
+            <div class="flex flex-col sm:flex-row gap-4 mb-12">
+                <div class="relative flex-grow">
+                    <input 
+                        type="text" 
+                        id="query" 
+                        placeholder="Ask anything..."
+                        class="w-full px-6 py-4 rounded-xl bg-slate-800/70 text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 border border-slate-700 hover:border-indigo-500 transition-all duration-300 peer"
+                        autocomplete="off"
+                    >
+                    <div class="absolute inset-y-0 right-0 flex items-center pr-4 pointer-events-none text-gray-500 peer-focus:text-indigo-400 transition-colors">
+                        <i class="fas fa-magnifying-glass"></i>
+                    </div>
+                </div>
+                <button 
+                    id="searchBtn" 
+                    class="px-8 py-4 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-xl hover:from-indigo-700 hover:to-purple-700 transition-all duration-300 flex items-center justify-center gap-3 font-medium shadow-lg hover:shadow-indigo-500/20"
+                >
+                    <i class="fas fa-bolt"></i> Search
+                </button>
+            </div>
+            
+            <div id="results" class="space-y-6"></div>
+        </div>
+    </div>
+
+    <div class="fixed bottom-6 right-6 text-xs text-gray-500">
+        <span class="opacity-70">Wikipedia Quantum v1.0</span>
+    </div>
+
+    <script>
+        // Wikipedia Quantum - Premium Search Interface
+        function performSearch() {
+            const query = document.getElementById('query').value.trim();
+            const resultsDiv = document.getElementById('results');
+            
+            if (!query) {
+                showError('Please enter a search term');
+                return;
+            }
+
+            // Add search glow effect
+            document.getElementById('query').classList.add('search-glow');
+            setTimeout(() => document.getElementById('query').classList.remove('search-glow'), 1000);
+
+            // Show premium loading state
+            resultsDiv.innerHTML = `
+                <div class="fade-in flex flex-col items-center justify-center py-16 space-y-6">
+                    <div class="relative w-24 h-24">
+                        <div class="absolute inset-0 bg-indigo-500/20 rounded-full blur-md"></div>
+                        <div class="relative w-full h-full flex items-center justify-center">
+                            <svg class="animate-spin h-16 w-16 text-indigo-400" viewBox="0 0 24 24">
+                                <circle class="opacity-20" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                <path class="opacity-80" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                            </svg>
+                        </div>
+                    </div>
+                    <div class="text-center space-y-2">
+                        <h3 class="text-xl font-medium text-indigo-200">Quantum Search Engaged</h3>
+                        <p class="text-gray-400">Analyzing knowledge dimensions for "${query}"</p>
+                        <div class="pt-4 w-full max-w-xs mx-auto">
+                            <div class="h-1 bg-gray-800 rounded-full overflow-hidden">
+                                <div class="h-full bg-gradient-to-r from-indigo-500 to-purple-600 animate-pulse" style="width: 70%"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            fetchWikipediaData(query, resultsDiv);
+        }
+        
+        async function fetchWikipediaData(query, resultsDiv) {
+            try {
+                // Get search results
+                const searchResponse = await fetch(`https://en.wikipedia.org/w/api.php?action=query&format=json&origin=*&list=search&srsearch=${encodeURIComponent(query)}`);
+                const searchData = await searchResponse.json();
+                
+                if (!searchData.query || !searchData.query.search || !searchData.query.search.length) {
+                    showError('No quantum knowledge found. Try a different search term.');
+                    return;
+                }
+
+                // Get page data with a larger thumbnail image
+                const pageId = searchData.query.search[0].pageid;
+                const pageResponse = await fetch(`https://en.wikipedia.org/w/api.php?action=query&format=json&origin=*&prop=extracts|pageimages&exintro&explaintext&pageids=${pageId}&pithumbsize=500`);
+                const pageData = await pageResponse.json();
+                const page = pageData.query.pages[pageId];
+
+                // Display enhanced premium results with clearer image
+                resultsDiv.innerHTML = `
+                    <div class="fade-in result-card p-8 rounded-2xl transition-all duration-500 hover:shadow-lg hover:shadow-indigo-500/10">
+                        <div class="flex flex-col md:flex-row items-start gap-6">
+                            ${page.thumbnail ? 
+                                `<div class="flex-shrink-0 w-full md:w-40 h-40 rounded-xl overflow-hidden shadow-lg">
+                                    <img src="${page.thumbnail.source}" class="w-full h-full object-cover result-image" alt="${page.title}" loading="eager">
+                                </div>` : 
+                                `<div class="flex-shrink-0 w-full md:w-40 h-40 rounded-xl bg-gradient-to-br from-indigo-900/50 to-purple-900/50 flex items-center justify-center shadow-lg">
+                                    <i class="fas fa-book-open text-4xl text-indigo-400/50"></i>
+                                </div>`
+                            }
+                            <div class="flex-1">
+                                <h2 class="text-3xl font-bold text-white mb-3">${page.title}</h2>
+                                <p class="text-gray-300 mb-6 leading-relaxed">${page.extract || 'No quantum knowledge extract available.'}</p>
+                                <div class="flex items-center gap-4 flex-wrap">
+                                    <a href="https://en.wikipedia.org/?curid=${pageId}" target="_blank" class="px-6 py-3 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-xl hover:from-indigo-700 hover:to-purple-700 transition-all duration-300 flex items-center gap-2 font-medium shadow-lg hover:shadow-indigo-500/20">
+                                        <i class="fas fa-external-link-alt"></i> Explore Dimension
+                                    </a>
+                                    <button class="px-4 py-3 bg-slate-800/50 text-indigo-400 rounded-xl hover:bg-slate-800 transition-all duration-300 flex items-center gap-2 border border-slate-700/50">
+                                        <i class="fas fa-share-nodes"></i> Share
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="mt-8 pt-6 border-t border-slate-800/50 flex items-center justify-between">
+                            <div class="text-sm text-gray-500">
+                                <i class="fas fa-atom mr-1"></i> Quantum Knowledge Node
+                            </div>
+                            <div class="text-sm text-gray-500">
+                                Last updated: ${new Date().toLocaleDateString()}
+                            </div>
+                        </div>
+                    </div>
+                `;
+            } catch (error) {
+                console.error('Quantum error:', error);
+                showError('Quantum fluctuation detected. Please try again.');
+            }
+        }
+
+        function showError(message) {
+            const errorId = 'error-' + Date.now();
+            document.getElementById('results').innerHTML = `
+                <div id="${errorId}" class="fixed top-6 right-6 p-5 bg-gradient-to-br from-red-600 to-rose-700 text-white rounded-xl shadow-2xl flex items-start gap-3 max-w-sm fade-in">
+                    <div class="flex-shrink-0 pt-0.5">
+                        <i class="fas fa-radiation text-xl"></i>
+                    </div>
+                    <div>
+                        <h3 class="font-medium mb-1">Quantum Anomaly</h3>
+                        <p class="text-sm opacity-90">${message}</p>
+                    </div>
+                    <button onclick="document.getElementById('${errorId}').remove()" class="ml-auto opacity-70 hover:opacity-100 transition-opacity">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+            `;
+            setTimeout(() => {
+                const errorDiv = document.getElementById(errorId);
+                if (errorDiv) {
+                    errorDiv.classList.add('opacity-0', 'transition-opacity', 'duration-300');
+                    setTimeout(() => errorDiv.remove(), 300);
+                }
+            }, 5000);
+        }
+
+        // Add event listeners for search
+        document.getElementById('searchBtn').addEventListener('click', performSearch);
+        
+        // Add event listener for Enter key
+        document.getElementById('query').addEventListener('keypress', function(event) {
+            if (event.key === 'Enter') {
+                event.preventDefault(); // Prevent default form submission
+                performSearch();
+            }
+        });
+    </script>
+</body>
+</html>
